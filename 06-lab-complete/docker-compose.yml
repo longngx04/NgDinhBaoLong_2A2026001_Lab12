@@ -1,16 +1,31 @@
-version: "3.9"
+# Docker Compose — Production AI Agent Stack
 
 services:
+  # ─── Nginx Load Balancer ─────────────────────────────
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      agent:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─── Agent Service (scalable) ────────────────────────
   agent:
     build: .
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     environment:
       - ENVIRONMENT=staging
       - APP_NAME=Production AI Agent
+      - AGENT_API_KEY=${AGENT_API_KEY:-local-dev-api-key}
+      - JWT_SECRET=${JWT_SECRET:-local-dev-jwt-secret}
       - REDIS_URL=redis://redis:6379/0
-    env_file:
-      - .env.local
+      - RATE_LIMIT_PER_MINUTE=10
+      - MONTHLY_BUDGET_USD=10.0
     depends_on:
       redis:
         condition: service_healthy
@@ -23,11 +38,18 @@ services:
       start_period: 15s
     restart: unless-stopped
 
+  # ─── Redis (session + rate limit + cost guard) ───────
   redis:
     image: redis:7-alpine
-    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru --appendonly yes
+    volumes:
+      - redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
       retries: 3
+    restart: unless-stopped
+
+volumes:
+  redis-data:

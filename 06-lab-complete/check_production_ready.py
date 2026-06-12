@@ -11,6 +11,9 @@ import sys
 import json
 import subprocess
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 
 def check(name: str, passed: bool, detail: str = "") -> dict:
     icon = "✅" if passed else "❌"
@@ -53,7 +56,7 @@ def run_checks():
     env_ignored = False
     for gi in [gitignore, root_gitignore]:
         if os.path.exists(gi):
-            content = open(gi).read()
+            content = open(gi, encoding='utf-8').read()
             if ".env" in content:
                 env_ignored = True
                 break
@@ -66,7 +69,7 @@ def run_checks():
     for f in ["app/main.py", "app/config.py"]:
         fpath = os.path.join(base, f)
         if os.path.exists(fpath):
-            content = open(fpath).read()
+            content = open(fpath, encoding='utf-8').read()
             for bad in ["sk-", "password123", "hardcoded"]:
                 if bad in content:
                     secrets_found.append(f"{f}:{bad}")
@@ -78,7 +81,7 @@ def run_checks():
     print("\n🌐 API Endpoints (code check)")
     main_py = os.path.join(base, "app", "main.py")
     if os.path.exists(main_py):
-        content = open(main_py).read()
+        content = open(main_py, encoding='utf-8').read()
         results.append(check("/health endpoint defined",
                              '"/health"' in content or "'/health'" in content))
         results.append(check("/ready endpoint defined",
@@ -98,7 +101,7 @@ def run_checks():
     print("\n🐳 Docker")
     dockerfile = os.path.join(base, "Dockerfile")
     if os.path.exists(dockerfile):
-        content = open(dockerfile).read()
+        content = open(dockerfile, encoding='utf-8').read()
         results.append(check("Multi-stage build",
                              "AS builder" in content or "AS runtime" in content))
         results.append(check("Non-root user",
@@ -110,7 +113,7 @@ def run_checks():
 
     dockerignore = os.path.join(base, ".dockerignore")
     if os.path.exists(dockerignore):
-        content = open(dockerignore).read()
+        content = open(dockerignore, encoding='utf-8').read()
         results.append(check(".dockerignore covers .env",
                              ".env" in content))
         results.append(check(".dockerignore covers __pycache__",

@@ -97,4 +97,29 @@ railway domain
 python check_production_ready.py
 ```
 
+---
+
+## Public Deployment URL
+
+- Railway service: `agent`
+- API base URL: `https://agent-production-164a.up.railway.app`
+- Health check: `https://agent-production-164a.up.railway.app/health`
+- Verified on 2026-06-12:
+  - `GET /health` returns `200 OK`
+  - `POST /ask` with production `X-API-Key` returns an agent response
+  - `POST /ask` without `X-API-Key` returns `401`
+
+Example:
+
+```bash
+curl https://agent-production-164a.up.railway.app/health
+```
+
+```bash
+curl -X POST https://agent-production-164a.up.railway.app/ask \
+  -H "X-API-Key: <production-api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What is deployment?", "user_id": "student-demo"}'
+```
+
 Script này kiểm tra tất cả items trong checklist và báo cáo những gì còn thiếu.
